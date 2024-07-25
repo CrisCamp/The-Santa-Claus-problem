@@ -17,94 +17,77 @@ public class Principal {
 }
 
 class SantaBack {
-    private Claus claus;
-    private Semaphore dealDuente;
-    private Semaphore dealReno;
-    private int COLA_DUENDES = 3;
-    private int COLA_RENOS = 9;
+    private Semaphore paseDuentes;
+    private Semaphore paseRenos;
+    private int DUENDES = 3;
+    private int RENOS = 9;
     
     public SantaBack() {
-        this.dealDuente = new Semaphore(COLA_DUENDES);
-        this.dealReno = new Semaphore(COLA_RENOS);
-        this.claus = new Claus(this); // Inicializar claus aquí
+        this.paseDuentes = new Semaphore(DUENDES);
+        this.paseRenos = new Semaphore(RENOS);
     }
 
+    // Para un solo hilo Claus
     public void run () throws InterruptedException {
-        if (dealReno.availablePermits() == 0) {
-            claus.tratarReno();
-            salirRenos();
-        } else if (dealDuente.availablePermits() == 0) {
-            claus.tratarDuende();
-            salirDuendes();
+        if (paseRenos.availablePermits() == 0) {
+            System.out.println("Claus trabaja con los renos");
+            Thread.sleep(5000);
+            paseRenos.release(RENOS); // Liberar todos los permisos a la vez
+        } else if (paseDuentes.availablePermits() == 0) {
+            System.out.println("Santa Claus ayuda a los duendes");
+            Thread.sleep(1000);
+            paseDuentes.release(DUENDES); // Liberar todos los permisos a la vez
         } else {
-            claus.dormir();
+            System.out.println("Claus duerme");
+            Thread.sleep((int) (Math.random() * 1000));
         }
     }
 
+    // Para varios hilos Duendes 'synchronized'
     synchronized void formarDuendes() {
         try {
-            dealDuente.acquire(); // Adquirir primero
+            paseDuentes.acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    public void salirDuendes() {
-        dealDuente.release(COLA_DUENDES); // Liberar todos los permisos a la vez
-    }
-
+    // Para varios hilos Renos 'synchronized'
     synchronized void formarRenos(){
         try {
-            dealReno.acquire(); // Adquirir primero
+            paseRenos.acquire(); 
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    public void salirRenos() {
-        dealReno.release(COLA_RENOS); // Liberar todos los permisos a la vez
     }
 }
 
 class Claus implements Runnable {
-    private SantaBack colaClaus;
+    private SantaBack paseClaus;
 
-    public Claus(SantaBack colaClaus) {
-        this.colaClaus = colaClaus;
+    public Claus(SantaBack paseClaus) {
+        this.paseClaus = paseClaus;
     }
 
     @Override
     public void run() {
         while (true) {
             try {
-                colaClaus.run();
+                paseClaus.run();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
     }
-
-    public void dormir() throws InterruptedException {
-        System.out.println("Claus duerme");
-        Thread.sleep((int) (Math.random() * 10000));
-    }
-
-    synchronized void tratarDuende() {
-        System.out.println("Santa Claus ayuda a los duendes");
-    }
-
-    synchronized void tratarReno() {
-        System.out.println("Claus trabaja con los renos");
-    }
 }
 
 class Reno implements Runnable {
     private int id;
-    private SantaBack colaReno;
+    private SantaBack paseReno;
 
-    public Reno(int id, SantaBack colaReno) {
+    public Reno(int id, SantaBack paseReno) {
         this.id = id;
-        this.colaReno = colaReno;
+        this.paseReno = paseReno;
     }
 
     @Override
@@ -112,7 +95,7 @@ class Reno implements Runnable {
         while (true) {
             try {
                 esperar();
-                colaReno.formarRenos();
+                paseReno.formarRenos();
                 formarReno();
             } catch (InterruptedException ex) {
                 Logger.getLogger(Reno.class.getName()).log(Level.SEVERE, null, ex);
@@ -120,22 +103,22 @@ class Reno implements Runnable {
         }
     }
 
-    synchronized void esperar() throws InterruptedException {
+    private void esperar() throws InterruptedException {
         Thread.sleep((int) (Math.random() * 25000));
     }
 
     private void formarReno() {
-        System.out.println("Reno " + id + " llega a la cola");
+        System.out.println("Reno " + id + " llega a la fila");
     }
 }
 
 class Duende implements Runnable {
     private int id;
-    private SantaBack colaDuende;
+    private SantaBack paseDuende;
 
-    public Duende(int id, SantaBack colaDuende) {
+    public Duende(int id, SantaBack paseDuende) {
         this.id = id;
-        this.colaDuende = colaDuende;
+        this.paseDuende = paseDuende;
     }
 
     @Override
@@ -143,7 +126,7 @@ class Duende implements Runnable {
         while (true) {
             try {
                 esperar();
-                colaDuende.formarDuendes();
+                paseDuende.formarDuendes();
                 formarDuende();
             } catch (InterruptedException ex) {
                 Logger.getLogger(Duende.class.getName()).log(Level.SEVERE, null, ex);
@@ -151,11 +134,11 @@ class Duende implements Runnable {
         }
     }
 
-    synchronized void esperar() throws InterruptedException {
+    private void esperar() throws InterruptedException {
         Thread.sleep((int) (Math.random() * 30000));
     }
 
     private void formarDuende() {
-        System.out.println("Duende " + id + " llega a la cola");
+        System.out.println("Duende " + id + " llega a la fila");
     }
 }
