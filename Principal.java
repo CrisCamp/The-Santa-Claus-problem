@@ -30,17 +30,14 @@ class SantaBack {
     }
 
     public void run () throws InterruptedException {
-        while (true) {
-            if (dealReno.availablePermits() == 0) {
-                claus.tratarReno();
-                salirRenos();
-                break;
-            } else if (dealDuente.availablePermits() == 0) {
-                claus.tratarDuende();
-                salirDuendes();
-            } else {
-                claus.dormir();
-            }
+        if (dealReno.availablePermits() == 0) {
+            claus.tratarReno();
+            salirRenos();
+        } else if (dealDuente.availablePermits() == 0) {
+            claus.tratarDuende();
+            salirDuendes();
+        } else {
+            claus.dormir();
         }
     }
 
@@ -82,7 +79,6 @@ class Claus implements Runnable {
             try {
                 colaClaus.run();
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -117,14 +113,18 @@ class Reno implements Runnable {
             try {
                 esperar();
                 colaReno.formarRenos();
+                formarReno();
             } catch (InterruptedException ex) {
                 Logger.getLogger(Reno.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
 
-    private void esperar() throws InterruptedException {
+    synchronized void esperar() throws InterruptedException {
         Thread.sleep((int) (Math.random() * 25000));
+    }
+
+    private void formarReno() {
         System.out.println("Reno " + id + " llega a la cola");
     }
 }
@@ -144,14 +144,18 @@ class Duende implements Runnable {
             try {
                 esperar();
                 colaDuende.formarDuendes();
+                formarDuende();
             } catch (InterruptedException ex) {
                 Logger.getLogger(Duende.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
 
-    private void esperar() throws InterruptedException {
+    synchronized void esperar() throws InterruptedException {
         Thread.sleep((int) (Math.random() * 30000));
+    }
+
+    private void formarDuende() {
         System.out.println("Duende " + id + " llega a la cola");
     }
 }
